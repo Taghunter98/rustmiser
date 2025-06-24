@@ -34,7 +34,7 @@ use url::Url;
 /// - Returns [`StreamExt`](core::result::Result<Error>) - if the future is unable to resolve the next item in stream.
 ///
 /// ## Examples
-/// 
+///
 /// Get live data
 /// ```rust
 /// websoc::run("GET_LIVE_DATA", "0")
@@ -42,7 +42,7 @@ use url::Url;
 ///     .expect("websocket connection failed");
 /// }
 /// ```
-/// 
+///
 /// Reboot system
 /// ```rust
 /// websoc::run("RESET", "0")
@@ -58,7 +58,7 @@ use url::Url;
 ///     .expect("websocket connection failed");
 /// }
 /// ```
-/// 
+///
 /// Run a recipe
 /// ```rust
 /// websoc::run("RUN_RECIPE", "['recipeName']")
@@ -66,7 +66,7 @@ use url::Url;
 ///     .expect("websocket connection failed");
 /// }
 /// ```
-/// 
+///
 /// Get system files
 /// ```rust
 /// websoc::run("GET_SYSTEM", "0")
