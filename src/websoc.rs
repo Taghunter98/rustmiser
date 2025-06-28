@@ -1,4 +1,4 @@
-use futures_util::{SinkExt, StreamExt};
+use futures_util::SinkExt;
 use std::env::var;
 use tokio::net::TcpStream;
 use tokio_native_tls::native_tls::TlsConnector;
@@ -75,7 +75,7 @@ use url::Url;
 /// }
 /// ```
 ///
-pub async fn run(command: &str, value: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn run(command: &str, value: &str) -> WebSocketStream<TlsStream<TcpStream>> {
     let token: String = var("API_KEY").expect("can't retrieve .env value");
 
     let mut socket: WebSocketStream<TlsStream<TcpStream>> = neo_connect().await;
@@ -94,12 +94,7 @@ pub async fn run(command: &str, value: &str) -> Result<(), Box<dyn std::error::E
         .await
         .expect("unable to complete future");
 
-    if let Some(msg) = socket.next().await {
-        let response: Message = msg.expect("future unable to resolve next item in stream");
-        println!("Response: {}", response);
-    }
-
-    Ok(())
+    socket
 }
 
 /// Creates a websocket connection to heatmiser neohub.
