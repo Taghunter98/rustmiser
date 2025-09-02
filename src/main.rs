@@ -1,6 +1,6 @@
 use axum::{
     Error, Json, Router,
-    extract::{Path, rejection::JsonRejection},
+    extract::rejection::JsonRejection,
     response::Redirect,
     routing::{get, post},
 };
@@ -30,7 +30,7 @@ async fn main() -> Result<(), Error> {
     // App routes
     let app: Router = Router::new()
         .route("/", get(root))
-        .route("/system{cmd}/{id}", get(system))
+        .route("/system", post(system))
         .route("/temp", get(temp))
         .route("/schedule", post(set_schedule))
         .nest_service("/static", static_files);
@@ -43,19 +43,43 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
+/// Handler to render index.html
+///
 async fn root() -> Redirect {
     Redirect::to("/static/index.html")
 }
 
-async fn system(Path((cmd, id)): Path<(String, String)>) -> Result<Json<String>, StatusCode> {
-    let mut socket = websoc::run(&cmd, &id).await;
+#[derive(Deserialize)]
+struct Command {
+    cmd: String,
+    id: String,
+}
 
-    let msg = socket
-        .next()
-        .await
-        .expect("future unable to resolve next item in stream");
+/// Handler returns NeoHub data from command.
+///
+/// Works by first deserialising the data into a Command struct then a run attempt is made with the
+/// new command.
+///
+/// ## Errors
+///
+/// - Returns ['JsonRejection'](axum::extract::rejection) - if the JSON data is missing or incorrect.
+/// - Resturns ['Json<String>'](axum::json) - if the heatpump rejects the command or is invalid.
+///
+async fn system(payload: Result<Json<Command>, JsonRejection>) -> Json<String> {
+    match payload {
+        Ok(payload) => {
+            let mut socket = websoc::run(&payload.cmd, &payload.id).await;
 
-    Ok(Json(format!("{:?}", msg)))
+            let msg = socket
+                .next()
+                .await
+                .expect("future unable to resolve next item in stream");
+
+            Json(format!("{:?}", msg))
+        }
+        Err(JsonRejection::MissingJsonContentType(_)) => Json("Missing JSON content type".to_string()),
+        Err(_) => Json("Something went wrong".to_string()),
+    }
 }
 
 async fn temp() -> Result<Json<String>, StatusCode> {
@@ -70,6 +94,17 @@ struct Schedule {
     time: String,
 }
 
+/// Handler sets the schedule for running recipes at a given time.
+///
+/// Works by first deserialising the data into a Schedule scruct then runs a new job or attempts to
+/// cancel based on job name. The jobs are stored in a global object so that only one instance can be
+/// looked up.
+///
+/// ## Errors
+///
+/// - Returns ['JsonRejection'](axum::extract::rejection) - if the JSON data is missing or incorrect.
+/// - Resturns ['Json<String>'](axum::json) - if the heatpump rejects the command or is invalid.
+///
 async fn set_schedule(
     payload: Result<Json<Schedule>, JsonRejection>,
 ) -> axum::Json<std::string::String> {
@@ -90,13 +125,14 @@ async fn set_schedule(
                 }
                 false => {
                     scheduler.await.cancel_by_name("run_recipes");
+                    println!("Canceled job 'run_recipes'");
                     data = String::from("Stopping schedule for 11.59pm daily");
                 }
             }
 
-            Json(format!("{}", data))
+            Json(data.to_string())
         }
-        Err(JsonRejection::MissingJsonContentType(_)) => Json(format!("Missing JSON content type")),
-        Err(_) => Json(format!("Something went wrong")),
+        Err(JsonRejection::MissingJsonContentType(_)) => Json("Missing JSON content type".to_string()),
+        Err(_) => Json("Something went wrong".to_string()),
     }
 }

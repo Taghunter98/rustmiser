@@ -32,12 +32,16 @@
       });
 
       document.getElementById("runbtn").addEventListener("click", () => {
-        const url =
-          "/system" +
-          document.getElementById("cmd").value +
-          "/" +
-          document.getElementById("cmd_id").value;
-        fetch(url)
+        const cmd = document.getElementById("cmd").value;
+        const id = document.getElementById("cmd_id").value;
+        fetch("/system", {
+          method: "POST",
+          body: JSON.stringify({
+            cmd: cmd,
+            id: id,
+          }),
+          headers: { "Content-type": "application/json; charset=UTF-8" },
+        })
           .then(resp => resp.json())
           .then(data => (document.getElementById("neores").innerHTML = data))
           .catch(error => console.log(error));
