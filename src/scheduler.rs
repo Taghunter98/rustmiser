@@ -1,31 +1,6 @@
-use crate::{Schedule, weather, websoc};
-use tokio_cron::{Job, Scheduler};
+use crate::{weather, websoc};
 
-/// Function schedules a cron job to run based of JSON payload recieved.
-///
-/// If the data is true, then the cron job is run at 11.59 daily or the job is stopped.
-pub fn schedule(payload: &axum::Json<Schedule>) -> String {
-    println!("Recieved -> set: {} ", payload.run);
-    let mut scheduler = Scheduler::local();
-
-    // Run a cron job at given time
-    match payload.run {
-        true => {
-            scheduler.add(Job::named(
-                "run_recipes",
-                "1 * * * * *",
-                run_recipes_from_data,
-            ));
-            String::from("Running schedule for 11.59pm daily")
-        }
-        false => {
-            Scheduler::cancel_by_name(&mut scheduler, "run_recipes");
-            String::from("Stopping schedule for 11.59pm daily")
-        }
-    }
-}
-
-async fn run_recipes_from_data() {
+pub async fn run_recipes_from_data() {
     let min: f64 = weather::get_min_temp("TN174HH", "ac2509f894e84d20b84193300250503").await;
     println!("The min temp is {min} today");
 

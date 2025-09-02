@@ -5,15 +5,19 @@ use axum::{
     routing::{get, post},
 };
 use dotenv::dotenv;
-use futures_util::StreamExt;
+use futures_util::{StreamExt, lock::Mutex};
+use once_cell::sync::Lazy;
 use reqwest::StatusCode;
 use serde::Deserialize;
+use tokio_cron::{Job, Scheduler};
 use tower_http::services::ServeDir;
 use tracing::{Level, info};
 
 mod scheduler;
 mod weather;
 mod websoc;
+
+static GLOBAL_SCHEDULER: Lazy<Mutex<Scheduler>> = Lazy::new(|| Mutex::new(Scheduler::utc()));
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -63,16 +67,34 @@ async fn temp() -> Result<Json<String>, StatusCode> {
 #[derive(Deserialize)]
 struct Schedule {
     run: bool,
+    time: String,
 }
 
 async fn set_schedule(
     payload: Result<Json<Schedule>, JsonRejection>,
 ) -> axum::Json<std::string::String> {
+    let data: String;
+
     match payload {
         Ok(payload) => {
-            let data = scheduler::schedule(&payload);
+            let scheduler = GLOBAL_SCHEDULER.lock();
 
-            Json(format!("{}", data,))
+            match payload.run {
+                true => {
+                    scheduler.await.add(Job::named(
+                        "run_recipes",
+                        &payload.time,
+                        scheduler::run_recipes_from_data,
+                    ));
+                    data = String::from("Running schedule for 11.59pm daily");
+                }
+                false => {
+                    scheduler.await.cancel_by_name("run_recipes");
+                    data = String::from("Stopping schedule for 11.59pm daily");
+                }
+            }
+
+            Json(format!("{}", data))
         }
         Err(JsonRejection::MissingJsonContentType(_)) => Json(format!("Missing JSON content type")),
         Err(_) => Json(format!("Something went wrong")),

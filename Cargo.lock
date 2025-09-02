@@ -1235,6 +1235,7 @@ dependencies = [
  "axum",
  "dotenv",
  "futures-util",
+ "once_cell",
  "reqwest",
  "serde",
  "serde_json",
