@@ -34,10 +34,9 @@ async fn main() -> Result<(), Error> {
         .route("/schedule", post(set_schedule))
         .fallback_service(static_service);
 
-    let listener: tokio::net::TcpListener = tokio::net::TcpListener::bind("127.0.0.1:4000")
-        .await
-        .unwrap();
-    info!("Server is listening on http://127.0.0.1:4000");
+    let listener: tokio::net::TcpListener =
+        tokio::net::TcpListener::bind("0.0.0.0:4000").await.unwrap();
+    info!("Server is listening on http://0.0.0.0:4000");
     axum::serve(listener, app).await.unwrap();
 
     Ok(())
