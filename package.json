@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "jay-cm": "^0.1.6"
+  },
+  "devDependencies": {
+    "chokidar": "^4.0.3",
+    "concurrently": "^9.2.1",
+    "install": "^0.13.0",
+    "npm": "^11.5.2",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.4"
+  }
+}

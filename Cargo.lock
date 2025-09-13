@@ -1243,6 +1243,7 @@ dependencies = [
  "tokio-cron",
  "tokio-native-tls",
  "tokio-tungstenite",
+ "tower",
  "tower-http",
  "tracing",
  "tracing-subscriber",

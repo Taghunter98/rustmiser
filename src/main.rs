@@ -1,7 +1,6 @@
 use axum::{
     Error, Json, Router,
     extract::rejection::JsonRejection,
-    response::Redirect,
     routing::{get, post},
 };
 use dotenv::dotenv;
@@ -25,28 +24,23 @@ async fn main() -> Result<(), Error> {
 
     tracing_subscriber::fmt().with_max_level(Level::INFO).init();
 
-    let static_files: ServeDir = ServeDir::new("./assets");
+    // Serve jay application via index.html in dist
+    let static_service: ServeDir = ServeDir::new("dist");
 
     // App routes
     let app: Router = Router::new()
-        .route("/", get(root))
         .route("/system", post(system))
         .route("/temp", get(temp))
         .route("/schedule", post(set_schedule))
-        .nest_service("/static", static_files);
+        .fallback_service(static_service);
 
-    let listener: tokio::net::TcpListener =
-        tokio::net::TcpListener::bind("0.0.0.0:4000").await.unwrap();
-    info!("Server is listening on http://0.0.0.0:4000");
+    let listener: tokio::net::TcpListener = tokio::net::TcpListener::bind("127.0.0.1:4000")
+        .await
+        .unwrap();
+    info!("Server is listening on http://127.0.0.1:4000");
     axum::serve(listener, app).await.unwrap();
 
     Ok(())
-}
-
-/// Handler to render index.html
-///
-async fn root() -> Redirect {
-    Redirect::to("/static/index.html")
 }
 
 #[derive(Deserialize)]
@@ -77,7 +71,9 @@ async fn system(payload: Result<Json<Command>, JsonRejection>) -> Json<String> {
 
             Json(format!("{:?}", msg))
         }
-        Err(JsonRejection::MissingJsonContentType(_)) => Json("Missing JSON content type".to_string()),
+        Err(JsonRejection::MissingJsonContentType(_)) => {
+            Json("Missing JSON content type".to_string())
+        }
         Err(_) => Json("Something went wrong".to_string()),
     }
 }
@@ -92,6 +88,10 @@ async fn temp() -> Result<Json<String>, StatusCode> {
 struct Schedule {
     run: bool,
     time: String,
+    threshold_1: f64,
+    threshold_2: f64,
+    threshold_3: f64,
+    threshold_4: f64,
 }
 
 /// Handler sets the schedule for running recipes at a given time.
@@ -118,8 +118,15 @@ async fn set_schedule(
                 true => {
                     scheduler.await.add(Job::named(
                         "run_recipes",
-                        &payload.time,
-                        scheduler::run_recipes_from_data,
+                        payload.time.clone(),
+                        move || {
+                            scheduler::run_recipes_from_data(
+                                payload.threshold_1,
+                                payload.threshold_2,
+                                payload.threshold_3,
+                                payload.threshold_4,
+                            )
+                        },
                     ));
                     data = String::from("Running schedule for 11.59pm daily");
                 }
@@ -132,7 +139,9 @@ async fn set_schedule(
 
             Json(data.to_string())
         }
-        Err(JsonRejection::MissingJsonContentType(_)) => Json("Missing JSON content type".to_string()),
+        Err(JsonRejection::MissingJsonContentType(_)) => {
+            Json("Missing JSON content type".to_string())
+        }
         Err(_) => Json("Something went wrong".to_string()),
     }
 }
