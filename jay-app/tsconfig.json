@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "esModuleInterop": true,
+    "strict": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@components/*": ["components/*"]
+    }
+  },
+  "include": ["src"]
+}
