@@ -24,8 +24,8 @@ async fn main() -> Result<(), Error> {
 
     tracing_subscriber::fmt().with_max_level(Level::INFO).init();
 
-    // Serve jay application via index.html in dist
-    let static_service: ServeDir = ServeDir::new("dist");
+    // Serve svelte application via index.html in build
+    let static_service: ServeDir = ServeDir::new("build");
 
     // App routes
     let app: Router = Router::new()
