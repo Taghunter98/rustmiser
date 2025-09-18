@@ -10,6 +10,7 @@
 
 <nav>
   <a href="/">Home</a>
+  <a href="/upload">Upload Files</a>
   <a href="/heatpump">Heatpump</a>
 </nav>
 
