@@ -31,7 +31,7 @@
       },
       body: JSON.stringify({
         run: run,
-        time: "50 23 * * *",
+        time: "50 11 * * * *",
         threshold_1: parseFloat(data[0].value),
         threshold_2: parseFloat(data[1].value),
         threshold_3: parseFloat(data[2].value),
