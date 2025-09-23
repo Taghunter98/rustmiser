@@ -10,7 +10,7 @@
       .catch(error => console.log(error));
   }
 
-  async function runRecipe() {
+  async function runRecipe(run: boolean) {
     const data = document.querySelectorAll<HTMLInputElement>("input");
     if (!data) {
       return;
@@ -30,8 +30,8 @@
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        run: true,
-        time: "1 * * * * *",
+        run: run,
+        time: "50 23 * * *",
         threshold_1: parseFloat(data[0].value),
         threshold_2: parseFloat(data[1].value),
         threshold_3: parseFloat(data[2].value),
@@ -59,7 +59,8 @@
   2.00 Start <input placeholder="Usually -3°" />
 </div>
 
-<button onclick={async () => runRecipe()}> Run Recipe Program </button>
+<button onclick={async () => runRecipe(true)}> Run Recipe Program </button>
+<button onclick={async () => runRecipe(false)}> Stop Recipe Program </button>
 
 <p>{result}</p>
 
