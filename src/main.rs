@@ -5,6 +5,7 @@ use axum::{
 };
 use dotenv::dotenv;
 use futures_util::{StreamExt, lock::Mutex};
+use mysql::*;
 use once_cell::sync::Lazy;
 use reqwest::StatusCode;
 use serde::Deserialize;
@@ -23,6 +24,20 @@ async fn main() -> Result<(), Error> {
     dotenv().ok();
 
     tracing_subscriber::fmt().with_max_level(Level::INFO).init();
+
+    // Setup msql connection
+    let url = Opts::from_url(
+        std::env::var("DB_URL")
+            .expect("Unable to find env")
+            .as_str(),
+    )
+    .expect("Unable to create URL");
+
+    let pool = Pool::new(url).expect("Unable to create pool");
+
+    // Test connection
+    pool.get_conn().expect("Can't connect to mysql");
+    println!("Connected to raspberry pi");
 
     // Serve svelte application via index.html in build
     let static_service: ServeDir = ServeDir::new("build");
